@@ -101,14 +101,17 @@ public class Menu extends JFrame implements ActionListener {
                 JOptionPane.showMessageDialog(null, "Dear " + name + ", your balance is: " + balance);
             }
         } else if (e.getSource() == history_button) {
-
-        } else if (e.getSource() == transaction_button) {
-
-        } else if(e.getSource() == withdraw_button) {
+            new HistoryBalance(this, this.id).setVisible(true);
             this.setVisible(false);
+        } else if (e.getSource() == transaction_button) {
+            new Transaction(this, this.id).setVisible(true);
+            this.setVisible(false);
+        } else if(e.getSource() == withdraw_button) {
             new Withdraw(this, id).setVisible(true);
+            this.setVisible(false);
         } else if(e.getSource() == deposit_button) {
-
+            new Deposit(this, id).setVisible(true);
+            this.setVisible(false);
         } else if(e.getSource() == exit_button) {
             this.dispose();
         }

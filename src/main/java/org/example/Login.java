@@ -4,12 +4,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.net.PasswordAuthentication;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 
-public class Login extends JFrame implements ActionListener {
+public class Login extends JFrame implements ActionListener, KeyListener {
     JLabel username_label, password_label;
     JPanel main_panel = new JPanel();
     ImageIcon logo = new ImageIcon("logo.png");
@@ -63,6 +65,9 @@ public class Login extends JFrame implements ActionListener {
         // ----------------- Listeners ----------------
         submit_button.addActionListener(this);
 
+        username_field.addKeyListener(this);
+        password_field.addKeyListener(this);
+
         // ----------------- Adding Components ---------
         main_panel.add(username_label);
         main_panel.add(username_field);
@@ -81,6 +86,9 @@ public class Login extends JFrame implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if(e.getSource() == submit_button) {
+            if(FieldFilters.checkField(username_field) || FieldFilters.checkField(password_field)) {
+                return;
+            }
             username_field.setEditable(false);
             password_field.setEditable(false);
             submit_button.setEnabled(false);
@@ -113,5 +121,22 @@ public class Login extends JFrame implements ActionListener {
             }
 
         }
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        if(e.getKeyCode() == 10) {
+            submit_button.doClick();
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+
     }
 }

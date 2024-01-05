@@ -46,8 +46,31 @@ public class AtmPanel extends JPanel {
         this.add(label);
     }
 
+    public int getOptionPanelHeight() {
+        return option_panel.getHeight();
+    }
+
+    public int getOptionPanelWidth() {
+        return option_panel.getWidth();
+    }
+
     public void addButton(JButton button) {
         option_panel.add(button);
+        this.setVisible(true);
+    }
+
+    public void addLabel(JLabel label) {
+        option_panel.add(label);
+        this.setVisible(true);
+    }
+
+    public void addTextField(JTextField textField) {
+        option_panel.add(textField);
+        this.setVisible(true);
+    }
+
+    public void addPanel(JPanel panel) {
+        option_panel.add(panel);
         this.setVisible(true);
     }
 }
