@@ -101,8 +101,6 @@ public class Login extends JFrame implements ActionListener, KeyListener {
             String q = "SELECT * FROM `user_credentials` WHERE `username` = '" + username + "' and " +
                     "`password` = '" + password + "'";
 
-            System.out.println(username + " " + password);
-
             ResultSet rs;
             try {
                 rs = conn.statement.executeQuery(q);

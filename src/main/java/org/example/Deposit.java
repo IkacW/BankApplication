@@ -6,15 +6,20 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Deposit extends JFrame implements ActionListener, KeyListener {
-    private ImageIcon logo = new ImageIcon("logo.png");
     private JPanel main_panel;
-    private int id;
-    private JLabel amount_label;
-    private JTextField amount_field;
-    private JButton back_button, deposit_button;
-    private JFrame main_frame;
+    private final int id;
+    private final JTextField amount_field;
+    private final JButton back_button;
+    private final JButton deposit_button;
+    private final JFrame main_frame;
+
+    public final ExecutorService executor = Executors.newCachedThreadPool();
+
     public Deposit(JFrame frame, int id) {
         this.id = id;
         this.main_frame = frame;
@@ -23,6 +28,7 @@ public class Deposit extends JFrame implements ActionListener, KeyListener {
         this.setSize(800, 700);
         this.setResizable(false);
         this.setTitle("Unicredit");
+        ImageIcon logo = new ImageIcon("logo.png");
         this.setIconImage(logo.getImage());
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -34,7 +40,7 @@ public class Deposit extends JFrame implements ActionListener, KeyListener {
 
 
         // -------------- Buttons/TextFields ------------
-        amount_label = new JLabel("Deposit amount:");
+        JLabel amount_label = new JLabel("Deposit amount:");
         amount_label.setFont(new Font("Swansea", Font.PLAIN, 20));
         amount_label.setBounds(17, 20, 300, 20);
         amount_label.setForeground(Color.white);
@@ -80,15 +86,21 @@ public class Deposit extends JFrame implements ActionListener, KeyListener {
 
             float amount = Float.parseFloat(amount_field.getText());
 
-            if (Bank.depositMoney(id, amount)) {
-                main_frame.setVisible(true);
-                this.dispose();
-            } else {
-                amount_field.setEditable(true);
-                deposit_button.setEnabled(true);
-                back_button.setEnabled(true);
-                amount_field.setText("");
-            }
+            CompletableFuture.supplyAsync(() -> Bank.depositMoney(id, amount), executor)
+                    .thenAccept(result -> {
+                        if(result) {
+                            JOptionPane.showMessageDialog(null, "Your request has been successfully executed", "Success", JOptionPane.INFORMATION_MESSAGE);
+                            main_frame.setVisible(true);
+                            this.dispose();
+                        } else {
+                            amount_field.setEditable(true);
+                            deposit_button.setEnabled(true);
+                            back_button.setEnabled(true);
+                            amount_field.setText("");
+                        }
+
+                        executor.shutdown();
+                    });
         } else if(e.getSource() == back_button) {
             main_frame.setVisible(true);
             this.dispose();

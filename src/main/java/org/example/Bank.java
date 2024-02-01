@@ -12,30 +12,57 @@ public class Bank {
     public static boolean withdrawMoney(int id, float amount) {
 
         Conn connection = new Conn();
-        String q = "SELECT balance FROM `user` WHERE id = " + id;
+        String q = "SELECT balance FROM `user` WHERE id = " + id + " FOR UPDATE";
 
-        ResultSet rs;
+        ResultSet rs = null;
         try {
+            connection.connection.setAutoCommit(false);
+
             rs = connection.statement.executeQuery(q);
 
             float balance;
-            if(rs.next()) {
+            if (rs.next()) {
                 balance = rs.getFloat("balance");
 
                 if (balance < amount) {
+                    connection.connection.rollback();
                     JOptionPane.showMessageDialog(null, "Insufficient funds.", "Info", JOptionPane.INFORMATION_MESSAGE);
                 } else {
                     float new_balance = balance - amount;
                     q = "UPDATE `user` SET `balance` = " + new_balance + " WHERE id = " + id;
                     connection.statement.executeUpdate(q);
+                    connection.connection.commit();
                     JOptionPane.showMessageDialog(null, "Your request has been successfully executed.", "Info", JOptionPane.INFORMATION_MESSAGE);
                     return true;
                 }
             } else {
+                connection.connection.rollback();
                 JOptionPane.showMessageDialog(null, "Error occurred!", "Error", JOptionPane.ERROR_MESSAGE);
             }
         } catch (SQLException ex) {
+            try {
+                connection.connection.rollback();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
             ex.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                connection.connection.setAutoCommit(true);
+                connection.connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+
         }
 
         return false;
@@ -44,9 +71,15 @@ public class Bank {
 
     public static boolean depositMoney(int id, float amount) {
         Conn connection = new Conn();
-        String q = "SELECT balance FROM `user` WHERE id = " + id;
+        try {
+            connection.connection.setAutoCommit(false);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
-        ResultSet rs;
+        String q = "SELECT balance FROM `user` WHERE id = " + id + " FOR UPDATE";
+
+        ResultSet rs = null;
 
         try {
             rs = connection.statement.executeQuery(q);
@@ -58,30 +91,50 @@ public class Bank {
                     q = "UPDATE `user` SET `balance` = " + new_balance + " WHERE id = " + id;
 
                     connection.statement.executeUpdate(q);
-                    JOptionPane.showMessageDialog(null, "Your request has been successfully executed", "Success", JOptionPane.INFORMATION_MESSAGE);
+
+                    connection.connection.commit();
 
                     return true;
                 } else {
                     JOptionPane.showMessageDialog(null, "The deposit amount must be greater that 0$", "Error", JOptionPane.ERROR_MESSAGE);
+                    connection.connection.rollback();
                     return false;
                 }
             } else {
                 JOptionPane.showMessageDialog(null, "Error occurred.", "Error", JOptionPane.ERROR_MESSAGE);
+                connection.connection.rollback();
                 return false;
             }
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                if(rs != null) {
+                    rs.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                connection.connection.setAutoCommit(true);
+                connection.connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
         return false;
     }
 
     public static boolean transferMoney(int id, long cardNo, String name, String last_name, float amount) {
         Conn connection = new Conn();
+
         String q = "SELECT * FROM `user` WHERE cardNo = '" + cardNo + "'";
 
-        ResultSet rs;
+        ResultSet rs = null;
 
         try {
+            connection.connection.setAutoCommit(false);
             rs = connection.statement.executeQuery(q);
 
             String q_name;
@@ -132,27 +185,73 @@ public class Bank {
 
                     connection.statement.executeUpdate(q);
 
+                    connection.connection.commit();
                     JOptionPane.showMessageDialog(null, "Your request has been successfully executed", "Success", JOptionPane.INFORMATION_MESSAGE);
                     return true;
                 } else {
+                    connection.connection.rollback();
                     JOptionPane.showMessageDialog(null, "Insufficient funds.", "Error", JOptionPane.ERROR_MESSAGE);
                     return false;
                 }
             } else {
+                connection.connection.rollback();
                 JOptionPane.showMessageDialog(null, "Error occurred.", "Error", JOptionPane.ERROR_MESSAGE);
                 return false;
             }
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                connection.connection.setAutoCommit(true);
+                connection.connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
         }
 
         return false;
     }
 
     public static boolean showHistory(int id, int page, JPanel historyPanel) {
+        historyPanel.removeAll();
+        historyPanel.setVisible(true);
         ResultSet rs;
         Conn connection = new Conn();
         String q = "SELECT cardNo FROM `user` where id = " + id;
+
+        JLabel from_card_l = new JLabel("from card");
+        from_card_l.setFont(new Font("Swansea", Font.PLAIN, 12));
+        from_card_l.setBounds(6, 10, 85, 12);
+        from_card_l.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK));
+
+        JLabel to_card_l = new JLabel("to card");
+        to_card_l.setFont(new Font("Swansea", Font.PLAIN, 12));
+        to_card_l.setBounds(97, 10, 85, 12);
+        to_card_l.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK));
+
+        JLabel amount_l = new JLabel("amount");
+        amount_l.setFont(new Font("Swansea", Font.PLAIN, 12));
+        amount_l.setBounds(188, 10, 50, 12);
+        amount_l.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK));
+
+        JLabel date_time_l = new JLabel("Date/Time");
+        date_time_l.setFont(new Font("Swansea", Font.PLAIN, 12));
+        date_time_l.setBounds(244, 10, 60, 12);
+        date_time_l.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK));
+
+        historyPanel.add(from_card_l);
+        historyPanel.add(to_card_l);
+        historyPanel.add(amount_l);
+        historyPanel.add(date_time_l);
 
         try {
             rs = connection.statement.executeQuery(q);
@@ -164,38 +263,41 @@ public class Bank {
                 return false;
             }
 
-            q = "SELECT * FROM `transaction` WHERE from_card = " + cardNo + "or to_card = " + cardNo + " LIMIT 9 OFFSET " + page * 8 ;
+            q = "SELECT * FROM `transaction` WHERE from_card = " + cardNo + " OR to_card = " + cardNo + " LIMIT 9 OFFSET " + (page * 8) ;
             rs = connection.statement.executeQuery(q);
 
             int counter = 0;
             for(int i = 28; rs.next(); i+=18) {
                 counter++;
-                if(counter == 9) {
-                    return true;
-                }
-                JLabel card_no_l = new JLabel(rs.getString("from_card"));
-                card_no_l.setFont(new Font("Swansea", Font.PLAIN, 10));
-                card_no_l.setBounds(6, i, 85, 12);
-                card_no_l.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK));
-                historyPanel.add(card_no_l);
+                JLabel card_no_l_val = new JLabel(rs.getString("from_card"));
+                card_no_l_val.setFont(new Font("Swansea", Font.PLAIN, 10));
+                card_no_l_val.setBounds(6, i, 85, 12);
+                card_no_l_val.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK));
+                historyPanel.add(card_no_l_val);
 
-                JLabel card_to_l = new JLabel(rs.getString("to_card"));
-                card_to_l.setFont(new Font("Swansea", Font.PLAIN, 10));
-                card_to_l.setBounds(97, i, 85, 12);
-                card_to_l.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK));
-                historyPanel.add(card_to_l);
+                JLabel card_to_l_val = new JLabel(rs.getString("to_card"));
+                card_to_l_val.setFont(new Font("Swansea", Font.PLAIN, 10));
+                card_to_l_val.setBounds(97, i, 85, 12);
+                card_to_l_val.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK));
+                historyPanel.add(card_to_l_val);
 
-                JLabel amount_l = new JLabel(rs.getString("amount"));
-                amount_l.setFont(new Font("Swansea", Font.PLAIN, 10));
-                amount_l.setBounds(188, i, 50, 12);
-                amount_l.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK));
-                historyPanel.add(amount_l);
+                JLabel amount_l_val = new JLabel(rs.getString("amount"));
+                amount_l_val.setFont(new Font("Swansea", Font.PLAIN, 10));
+                amount_l_val.setBounds(188, i, 50, 12);
+                amount_l_val.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK));
+                historyPanel.add(amount_l_val);
 
-                JLabel date_time_l = new JLabel(rs.getString("date"));
-                date_time_l.setFont(new Font("Swansea", Font.PLAIN, 10));
-                date_time_l.setBounds(244, i, 60, 12);
-                date_time_l.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK));
-                historyPanel.add(date_time_l);
+                JLabel date_time_l_val = new JLabel(rs.getString("date"));
+                date_time_l_val.setFont(new Font("Swansea", Font.PLAIN, 10));
+                date_time_l_val.setBounds(244, i, 60, 12);
+                date_time_l_val.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK));
+                historyPanel.add(date_time_l_val);
+            }
+
+            historyPanel.revalidate();
+            historyPanel.repaint();
+            if(counter == 9) {
+                return true;
             }
 
         } catch (SQLException e) {

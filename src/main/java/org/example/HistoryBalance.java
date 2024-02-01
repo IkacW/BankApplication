@@ -9,9 +9,11 @@ import java.awt.event.KeyListener;
 
 public class HistoryBalance extends JFrame implements ActionListener, KeyListener {
     private final int id;
+    private int page = 0;
+
     private final JFrame main_frame;
 
-    private int page = 0;
+    private final JPanel history_panel;
 
     private final JButton previous_page_button, next_page_button, back_button;
     HistoryBalance(JFrame frame, int id) {
@@ -46,7 +48,7 @@ public class HistoryBalance extends JFrame implements ActionListener, KeyListene
         back_button.setFocusable(false);
         back_button.setBounds(372, 215, 100, 20);
 
-        JPanel history_panel = new JPanel();
+        history_panel = new JPanel();
         history_panel.setLayout(null);
         history_panel.setBounds(90, 29, 312, 175);
         history_panel.setBackground(Color.white);
@@ -71,7 +73,9 @@ public class HistoryBalance extends JFrame implements ActionListener, KeyListene
         date_time_l.setBounds(244, 10, 60, 12);
         date_time_l.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK));
 
-        Bank.showHistory(this.id, page, history_panel);
+        if (!Bank.showHistory(this.id, page, history_panel)) {
+            next_page_button.setEnabled(false);
+        }
         // ------------ Listeners ----------------------
         previous_page_button.addActionListener(this);
         next_page_button.addActionListener(this);
@@ -94,9 +98,20 @@ public class HistoryBalance extends JFrame implements ActionListener, KeyListene
     @Override
     public void actionPerformed(ActionEvent e) {
         if(e.getSource() == previous_page_button) {
-
+            page--;
+            Bank.showHistory(id, page, history_panel);
+            if(page == 0) {
+                previous_page_button.setEnabled(false);
+            }
+            next_page_button.setEnabled(true);
         } else if(e.getSource() == next_page_button) {
-
+            page++;
+            if(Bank.showHistory(id, page, history_panel)) {
+                next_page_button.setEnabled(true);
+            } else {
+                next_page_button.setEnabled(false);
+            }
+            previous_page_button.setEnabled(true);
         } else if(e.getSource() == back_button) {
             main_frame.setVisible(true);
             this.dispose();
